@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ukiyo-Noir Studio v12 (Narrative Ed.)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        
+        body { background-color: #020617; font-family: 'Inter', sans-serif; color: #e2e8f0; }
+        
+        input, select, textarea { 
+            background-color: #1e293b; 
+            border: 1px solid #334155; 
+            color: #f1f5f9; 
+            transition: all 0.2s;
+        }
+        input:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: #6366f1; 
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); 
+        }
+
+        details > summary { list-style: none; cursor: pointer; }
+        details > summary::-webkit-details-marker { display: none; }
+        .step-panel { transition: all 0.3s ease; }
+        details[open] summary ~ * { animation: sweep .3s ease-in-out; }
+        @keyframes sweep {
+            0%    {opacity: 0; transform: translateY(-10px)}
+            100%  {opacity: 1; transform: translateY(0)}
+        }
+        
+        .scene-card { transition: all 0.2s; border-left: 3px solid transparent; }
+        .scene-card:hover { background-color: #334155; transform: translateX(2px); }
+        .scene-card.active { border-left-color: #f472b6; background-color: #1e293b; }
+        
+        .writer-card { border-left: 3px solid #6366f1; }
+        .writer-card.done { border-left-color: #10b981; }
+        .writer-card.intro { border-left-color: #fbbf24; }
+        .writer-card.intro.done { border-left-color: #10b981; }
+
+        .tag-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        .b-roll-mode { border-color: #fbbf24 !important; background-color: rgba(251, 191, 36, 0.05) !important;}
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <nav class="w-full bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-amber-500 rounded flex items-center justify-center font-bold text-white"><i class="fa-solid fa-clapperboard"></i></div>
+                <h1 class="text-xl font-bold tracking-tight text-white">Studio <span class="text-indigo-400 font-light">Ukiyo-Noir</span></h1>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button id="btnResetTop" title="Reset Project" class="w-9 h-9 bg-slate-800 hover:bg-rose-600 border border-slate-600 text-slate-200 rounded transition flex items-center justify-center">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+                <button id="btnSaveTop" title="Save Project" class="w-9 h-9 bg-slate-800 hover:bg-emerald-600 border border-slate-600 text-slate-200 rounded transition flex items-center justify-center">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex-1 max-w-4xl mx-auto w-full p-4 space-y-4">
+
+        <details id="step1" class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg step-panel" open>
+            <summary class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/80 rounded-t-xl hover:bg-slate-700 transition">
+                <h2 class="text-sm font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-1 fa-fw"></i> Step 1: Project Setup & Skeleton
+                </h2>
+                <span class="text-slate-400 text-xs"><i class="fa-solid fa-chevron-down mr-1"></i> Buka/Tutup</span>
+            </summary>
+            
+            <div class="p-5 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                    <div class="md:col-span-4">
+                        <label class="block text-[10px] font-bold text-sky-400 mb-1">TOPIC / KASUS UTAMA</label>
+                        <input type="text" id="sysTopic" placeholder="e.g. Setagaya family murder..." class="w-full p-2 text-xs rounded">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-rose-400 mb-1">ERA / TAHUN</label>
+                        <input type="text" id="sysEra" placeholder="e.g. 2000, Late 90s" class="w-full p-2 text-xs rounded border-rose-900 bg-rose-950/20 text-rose-100">
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-fuchsia-400 mb-1">NARRATIVE STRUCTURE</label>
+                        <select id="sysStructure" class="w-full p-2 text-xs rounded border-fuchsia-900 bg-fuchsia-950/20 text-fuchsia-100">
+                            <option value="Linear">Linear (Kronologis Klasik)</option>
+                            <option value="In Media Res">In Media Res (Klimaks di Awal)</option>
+                            <option value="Rabbit Hole">The Rabbit Hole (Gali Keganjilan)</option>
+                            <option value="False Narrative">False Narrative (Twist/Patahkan Teori)</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-sky-400 mb-1">STORY TYPE</label>
+                        <select id="sysType" class="w-full p-2 text-xs rounded">
+                            <option value="Real Event (True Crime Documentary)">True Crime</option>
+                            <option value="Imaginary (Realistic Fiction)">Fiction</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-amber-400 mb-1">STORY LANGUAGE</label>
+                        <select id="sysLang" class="w-full p-2 text-xs rounded border-amber-900 bg-amber-950/20 text-amber-100">
+                            <option value="Indonesian">Indonesia</option>
+                            <option value="English">English</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="btnGenerateSkeleton" class="w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition shadow-lg shadow-indigo-900/50 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-robot"></i> 1. Buat Prompt Kerangka Cerita
+                </button>
+
+                <div id="skeletonOutputContainer" class="hidden mt-4 bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-bold text-slate-400">COPY INSTRUKSI INI KE GEMINI:</label>
+                        <button id="btnCopySysOutput" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-white px-4 py-1.5 rounded transition font-bold border border-slate-600 flex items-center gap-1">
+                            <i class="fa-solid fa-copy"></i> COPY PROMPT
+                        </button>
+                    </div>
+                    <textarea id="sysOutput" readonly class="w-full h-40 bg-black/50 text-indigo-300 font-mono text-[10px] p-3 rounded border border-slate-700 resize-none focus:outline-none"></textarea>
+                </div>
+            </div>
+        </details>
+
+        <details id="step2" class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg step-panel">
+            <summary class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/80 rounded-t-xl hover:bg-slate-700 transition">
+                <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-2 fa-fw"></i> Step 2: The Writer's Room (Voice Over)
+                </h2>
+                <span class="text-slate-400 text-xs"><i class="fa-solid fa-chevron-down mr-1"></i> Buka/Tutup</span>
+            </summary>
+            
+            <div class="p-5 space-y-4">
+                <div id="jsonInputArea" class="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <label class="text-[10px] font-bold text-slate-400 block mb-2">PASTE BALASAN JSON DARI GEMINI DI SINI:</label>
+                    <textarea id="batchInput" rows="3" placeholder='{"intro": {...}, "acts": [...]}' class="w-full text-xs font-mono p-3 rounded-lg border-slate-600 bg-slate-900 mb-2"></textarea>
+                    <button id="btnProcessJSON" class="w-full bg-slate-700 hover:bg-emerald-600 text-xs py-2 rounded text-white font-bold transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-import"></i> Load Scenes ke Writer's Room
+                    </button>
+                </div>
+
+                <div id="writerRoomList" class="space-y-4 hidden"></div>
+
+                <button id="btnCopyFullScript" class="hidden w-full py-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition mt-4 shadow-lg shadow-emerald-900/50 border border-emerald-500 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-file-audio"></i> COPY FULL AUDIO SCRIPT (UNTUK TTS)
+                </button>
+            </div>
+        </details>
+
+        <details id="step3" class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg step-panel">
+            <summary class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/80 rounded-t-xl hover:bg-slate-700 transition">
+                <h2 class="text-sm font-bold text-pink-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-3 fa-fw"></i> Step 3: Visual Composition (Ukiyo-Noir)
+                </h2>
+                <span class="text-slate-400 text-xs"><i class="fa-solid fa-chevron-down mr-1"></i> Buka/Tutup</span>
+            </summary>
+            
+            <div class="p-5 flex gap-4 flex-col md:flex-row">
+                <div class="w-full md:w-1/3 bg-slate-900/50 rounded-lg border border-slate-700 p-3 h-[22rem] overflow-y-auto custom-scrollbar" id="visualSceneList">
+                    <p class="text-xs text-slate-500 text-center mt-10">Load JSON di Step 2 dulu.</p>
+                </div>
+
+                <div class="w-full md:w-2/3 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-rose-400 bg-rose-900/20 px-2 py-1 rounded">LOCKED ERA: <span id="lockedEra">...</span></span>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[10px] font-bold text-sky-400 mb-1">FOREGROUND / MAIN OBJECT</label>
+                        <input type="text" id="visForeground" class="w-full rounded p-2 text-sm border-sky-900/50 bg-sky-950/10" placeholder="e.g. A half-eaten ice cream and bloody mouse...">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">BACKGROUND / ENVIRONMENT</label>
+                        <input type="text" id="visBackground" class="w-full rounded p-2 text-sm" placeholder="e.g. A dimly lit, violently ransacked kitchen...">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-emerald-400 mb-1">ACTION (Meta AI / B-Roll Note)</label>
+                        <input type="text" id="visAction" class="w-full rounded p-2 text-sm border-emerald-900/50 bg-emerald-950/20" placeholder="e.g. Camera slowly pushes in on the ice cream...">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">ASPECT RATIO</label>
+                        <select id="visRatio" class="w-full rounded p-2 text-sm">
+                            <option value="16:9">16:9 (Landscape / YouTube)</option>
+                            <option value="9:16">9:16 (Portrait / Shorts/Reels)</option>
+                        </select>
+                    </div>
+
+                    <button id="btnGenerateMediaPrompts" class="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded shadow transition mt-2 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-palette"></i> Generate Media Prompts
+                    </button>
+                </div>
+            </div>
+        </details>
+
+        <details id="step4" class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg step-panel">
+            <summary class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/80 rounded-t-xl hover:bg-slate-700 transition">
+                <h2 class="text-sm font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-4 fa-fw"></i> Step 4: Final Prompts
+                </h2>
+                <span class="text-slate-400 text-xs"><i class="fa-solid fa-chevron-down mr-1"></i> Buka/Tutup</span>
+            </summary>
+            
+            <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 flex flex-col transition-all" id="boxImagePrompt">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-bold text-indigo-400" id="labelOutImage"><i class="fa-regular fa-image mr-1"></i> GEMINI IMAGE PROMPT</label>
+                        <button id="btnCopyImage" class="text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded transition font-bold shadow flex items-center gap-1">
+                            <i class="fa-solid fa-copy"></i> COPY
+                        </button>
+                    </div>
+                    <textarea id="outImage" readonly class="w-full h-32 bg-transparent text-sm text-indigo-200 resize-none focus:outline-none"></textarea>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 flex flex-col transition-all" id="boxVideoPrompt">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-bold text-emerald-400" id="labelOutVideo"><i class="fa-solid fa-video mr-1"></i> META AI VIDEO PROMPT</label>
+                        <button id="btnCopyVideo" class="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded transition font-bold shadow flex items-center gap-1">
+                            <i class="fa-solid fa-copy"></i> COPY
+                        </button>
+                    </div>
+                    <textarea id="outVideo" readonly class="w-full h-32 bg-transparent text-sm text-emerald-200 resize-none focus:outline-none"></textarea>
+                </div>
+            </div>
+        </details>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
