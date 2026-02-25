@@ -1,4 +1,3 @@
-// --- STATE MANAGEMENT ---
 let projectState = {
     topic: "",
     era: "",
@@ -12,18 +11,15 @@ let projectState = {
 
 let currentSelectedScene = null; 
 
-// --- INISIALISASI ---
 document.addEventListener('DOMContentLoaded', () => {
     loadProjectData();
     
-    // Bind Input Listeners
     const inputs = ['sysTopic', 'sysEra', 'sysStructure', 'sysType', 'sysLang'];
     inputs.forEach(id => {
         document.getElementById(id).addEventListener('input', updateStateObj);
         document.getElementById(id).addEventListener('change', updateStateObj);
     });
 
-    // Bind Button Listeners
     document.getElementById('btnResetTop').addEventListener('click', resetProject);
     document.getElementById('btnSaveTop').addEventListener('click', saveProjectData);
     document.getElementById('btnGenerateSkeleton').addEventListener('click', generateSkeletonPrompt);
@@ -42,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
         copyFromElement('outVideo', this);
     });
 
-    // Fitur Accordion Exclusive (Buka satu, tutup yang lain)
     const stepSummaries = document.querySelectorAll('.step-panel > summary');
     stepSummaries.forEach(summary => {
         summary.addEventListener('click', (e) => {
@@ -57,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Event Delegation untuk elemen dinamis di Writer's Room
     document.getElementById('writerRoomList').addEventListener('click', (e) => {
         const copyBtn = e.target.closest('button[data-action="copy-prompt"]');
         if (copyBtn) {
@@ -83,8 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-// --- CORE FUNCTIONS ---
 
 function updateStateObj() {
     projectState.topic = document.getElementById('sysTopic').value;
@@ -171,7 +163,6 @@ function resetProject() {
     }, 1000);
 }
 
-// === LOGIKA GENERATE PROMPT (MODIFIKASI NARRATIVE STRUCTURE) ===
 function generateSkeletonPrompt() {
     updateStateObj();
     const { topic, era, structure, type, lang } = projectState;
@@ -186,7 +177,6 @@ function generateSkeletonPrompt() {
         `Write the premise and instructions in English.` : 
         `Tuliskan premise dan instruksi dalam Bahasa Indonesia.`;
 
-    // 1. Tentukan Instruksi Struktur Alur
     let structureInstruction = "";
     if (structure === "In Media Res") {
         structureInstruction = isEng ?
@@ -206,7 +196,6 @@ function generateSkeletonPrompt() {
             `STRUKTUR ALUR (LINEAR): Ceritakan kisah ini dalam alur maju kronologis standar, dari awal mula rentetan kejadian hingga akhir penyelesaiannya.`;
     }
 
-    // 2. Tentukan Aturan Mutlak Anti-Ngangtung
     const coreFactRule = isEng ?
         `ABSOLUTE RULE: Despite the narrative structure used, DO NOT hide the main facts at the end. Ensure the ultimate fate of the main characters (e.g., how they died, who the perpetrator is, or their final status) is explained clearly, accurately, and does not end on a cliffhanger.` :
         `ATURAN MUTLAK: Meskipun menggunakan struktur alur di atas, JANGAN menyembunyikan fakta utama kasus di akhir cerita. Pastikan nasib akhir karakter utama (misal: bagaimana mereka meninggal, siapa pelakunya, atau status akhir mereka) dijelaskan secara gamblang, akurat, dan tidak menggantung.`;
@@ -249,11 +238,12 @@ function processSkeletonJSON() {
     }
 }
 
-// === RENDER WRITER'S ROOM (DENGAN ATURAN TTS) ===
 function renderWritersRoom() {
     const container = document.getElementById('writerRoomList');
     container.innerHTML = "";
     container.classList.remove('hidden');
+
+    let previousPremise = null;
 
     if (projectState.intro) {
         const introWrapper = document.createElement('div');
@@ -281,6 +271,8 @@ function renderWritersRoom() {
             </div>
         `;
         container.appendChild(introWrapper);
+        
+        previousPremise = projectState.intro.scene_premise;
     }
 
     projectState.acts.forEach((act, aIndex) => {
@@ -305,9 +297,12 @@ function renderWritersRoom() {
             const scnCard = document.createElement('div');
             scnCard.className = `writer-card p-4 bg-slate-800 rounded-lg shadow-sm relative ${savedNarration ? 'done' : ''}`;
             
+            const prevContextEng = previousPremise ? `Previous scene context: "${previousPremise}". ` : "";
+            const prevContextInd = previousPremise ? `Konteks kejadian sebelumnya: "${previousPremise}". ` : "";
+
             const rawPromptText = projectState.lang === "English"
-                ? `Write a voice-over narration of 70-90 words in ENGLISH for this scene: "${scene.scene_premise}". Context: A documentary about "${projectState.topic}" set in ${projectState.era}. Ensure the narration connects logically to the main story. SPELL OUT all numbers and years in words (e.g., "two thousand" instead of "2000"). Output ONLY the narration text. NO conversational filler.`
-                : `Tuliskan narasi/Voice Over sepanjang 70-90 kata dalam BAHASA INDONESIA untuk adegan ini: "${scene.scene_premise}". Konteks: Dokumenter tentang "${projectState.topic}" di era ${projectState.era}. Jaga kontinuitas cerita agar terhubung logis. SELALU tuliskan angka dan tahun dalam bentuk kata/ejaan (misal: "dua ribu" bukan "2000"). HANYA berikan teks narasi. TANPA penjelasan tambahan.`;
+                ? `Write a voice-over narration of 70-90 words in ENGLISH for this current scene: "${scene.scene_premise}". ${prevContextEng}Context: A documentary about "${projectState.topic}" set in ${projectState.era}. CRITICAL INSTRUCTION: This is a CONTINUATION of a flowing script. DO NOT re-introduce the main topic, the setting, or use repetitive formulaic openings. Bridge naturally from the previous scene context. SPELL OUT all numbers and years in words (e.g., "two thousand"). Output ONLY the narration text. NO conversational filler.`
+                : `Tuliskan Voice Over (70-90 kata) dalam BAHASA INDONESIA untuk adegan ini: "${scene.scene_premise}". ${prevContextInd}Konteks keseluruhan: Dokumenter "${projectState.topic}" era ${projectState.era}. INSTRUKSI KRITIS: Ini adalah KELANJUTAN dari naskah yang sedang berjalan. JANGAN mengulang perkenalan kasus, latar waktu, atau memakai kalimat pembuka klise yang diulang-ulang. Buat transisinya mengalir natural sebagai kelanjutan langsung dari adegan sebelumnya. SELALU tuliskan angka dan tahun dalam bentuk kata/ejaan. HANYA berikan teks narasi.`;
                 
             const safePromptText = rawPromptText.replace(/"/g, "&quot;");
 
@@ -324,6 +319,8 @@ function renderWritersRoom() {
                 <textarea data-key="${key}" rows="3" placeholder="Paste hasil narasi di sini..." class="w-full text-xs font-serif p-3 rounded bg-slate-900 border-slate-600 mt-2">${savedNarration}</textarea>
             `;
             sceneWrapper.appendChild(scnCard);
+
+            previousPremise = scene.scene_premise;
         });
 
         actDetails.appendChild(sceneWrapper);
@@ -513,8 +510,7 @@ function loadProjectData() {
                 document.getElementById('lockedEra').innerText = projectState.era || "Modern";
                 document.getElementById('btnCopyFullScript').classList.remove('hidden');
             }
-        } catch(e) {
-            console.error("Gagal meload data project lama.");
-        }
+        } catch(e) {}
     }
 }
+
